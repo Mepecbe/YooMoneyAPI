@@ -16,6 +16,9 @@ import {
 import { Scopes } from './enums';
 
 import { stringify } from 'uuid';
+import { Request } from 'express';
+import { Validators } from './validators';
+import { OperationInfo } from './types';
 
 class YooMoney{
 	private readonly clientid: string;
@@ -28,6 +31,8 @@ class YooMoney{
 	private readonly Server: ExpressFramework.Express;
 
 	public readonly onReceiveToken: Event<string> = new Event();
+	public readonly onPayment: Event<OperationInfo> = new Event();
+	
 
 	async auth(): Promise<RgResult<string>> {
 		const clientid = this.clientid;
@@ -94,7 +99,6 @@ class YooMoney{
 		return resp;
 	}
 
-
 	run(): void{
 		this.Server.listen(this.port);
 	}
@@ -134,6 +138,24 @@ class YooMoney{
 				}
 
 				this.onReceiveToken.emit(req.query.code);
+			});
+			
+
+			this.Server.post(`/`, async (req, res) => {
+				const jsonData: unknown = req.body;
+
+				if (jsonData != null){
+					const valid = Validators.getValidateOperationInfo(jsonData);
+
+					if (valid != null){
+						this.onPayment.emit(valid);
+					} else {
+						console.log(`[POST] failed validate operations info`);
+					}
+				} else {
+					console.log(`[POST] failed parse JSON`);
+					console.log(req.body);
+				}
 			});
 		}
 		

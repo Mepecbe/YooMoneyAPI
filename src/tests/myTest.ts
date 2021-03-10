@@ -11,9 +11,8 @@ async function main(): Promise<void> {
 	);
 
 	api.onReceiveToken.on(async (token) => {
-		console.log(`[onReceiveToken] ${token}`);
-
-		console.log(`[onReceiveToken] getAuthToken...`);
+		console.log(`[onReceiveToken] принял токен ${token}`);
+		console.log(`[onReceiveToken] запрашиваю авторизационный токен...`);
 
 		const authToken = await api.getAuthToken(token);
 
@@ -23,6 +22,11 @@ async function main(): Promise<void> {
 			console.log(`[onReceiveToken] error`);
 			console.log(authToken);
 		}
+	});
+
+	api.onPayment.on(async (info) => {
+		console.log(`==== ON PAYMENT ====`);
+		console.log(info);
 	});
 
 	{
