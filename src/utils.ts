@@ -1,22 +1,4 @@
-import {
-	createHmac
-} from "crypto";
-
-
-import {
-	RequestOptions,
-	RgWeb,
-	ErrorCodes as WebErrorCodes
-} from 'rg-web';
-
-
-
 export class ApiUtils{
-	public static ApiEndpoints = {
-		Invoices: "/v1/invoices",
-		CreateAccessToken: "/v1/auth/access-token"
-	};
-
 	public static isStruct(data: unknown): data is Record<string, unknown> {
 		if (typeof data !== "object" || data == null) {
 			return false;
@@ -103,32 +85,5 @@ export class ApiUtils{
 		}
 
 		return null;
-		/*
-		return {
-			amount: data.amount,
-			callback_url: data.callback_url,
-			coin: <CoinType>data.coin,
-			country_code: <CountryCode>data.country_code,
-			created_at: data.created_at,
-			fiat: <FiatType>data.fiat,
-			id: data.id,
-			lang_id: <Lang>data.lang_id,
-			payment_system_id: data.payment_system_id,
-			payment_url: data.payment_url,
-			redirect_url: data.payment_url,
-			status: data.status,
-			data: ""
-		};*/
-	}
-
-	public static getBase(token: string, method: string, endpoint: string): RequestOptions{
-		return {
-			method: method,
-			path: endpoint,
-			headers: {
-				"Accept": "application/json",
-				"Authorization": "Bearer " + token
-			}
-		};
 	}
 }
