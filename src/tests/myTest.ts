@@ -1,4 +1,6 @@
+/* eslint-disable max-len */
 import { Colors } from "rg";
+import { Scopes } from "../enums";
 import { YooMoney } from "../index";
 import { config, Config } from "./config";
 
@@ -11,17 +13,27 @@ async function main(): Promise<void> {
 	);
 
 	// eslint-disable-next-line max-len
-	api.authToken = "4100116305198344.BA12C0625B2F21B23DFE521F11A105B04FC45C3B33A7039EB0673E957E7BCFCE0C87F5D726D12C86A3706D861F0C19192216F8B7CE9845547F50B82916A9E5DA9F98D3883D3A0D9AB02E89ADE320BDBC690D037E42B9E60CBF3E13E63FAFA20F53F98957D6D2913381DEA00910DE3124EAFCC9FCF1D87249462B6ACC74B67160";
+	api.authToken = "4100116305198344.D628A5CE204674923B3D09DF22AA5077327548204ABBB71662DEA3CEB89D40CD62D0AC56FFEB4D94EF539695AE9FA4975F58EC4F91E50DA40E2010975ED62A7EB256FA5C8E293B40FC45270E94F686E08296B63740011BD6FACBE7663B3B5917669DA83D10778620BA1A4B0695DB80EA53E277793BF7CEA0B034C8FD42C82DEC";
 	
 	/*
-			setTimeout(() => {
-				api.getOperationsHistory(10);
-			}, 5000);*/
+	setTimeout(() => {
+		api.getOperationsHistory(10);
+	}, 5000);*/
 
 	setTimeout(async () => {
-		console.log(await api.getOperationsHistory(10));
-		console.log(`\n\n`);
-		//await api.getOperationsDetails("668719270537039642");
+		const operations = await api.getOperationsHistory(10);
+
+		if (operations.is_success){
+			for (const op of operations.data){
+				console.log(`\nЗапрос детальной информации об операции с ID ${op.operation_id}`);
+				const result = await api.getOperationsDetails(op.operation_id);
+
+				console.log(result);
+				break;
+			}
+		} else {
+			console.log(operations);
+		}
 	}, 2000);
 
 	api.onReceiveToken.on(async (token) => {
@@ -45,7 +57,9 @@ async function main(): Promise<void> {
 
 	{
 		api.run();
-		const url = await api.auth();
+		const url = await api.auth(
+			[Scopes.AccountInfo, Scopes.OperationsDetails, Scopes.OperationsHistory, Scopes.IncomingTransfers]
+		);
 
 		if (url.is_success){
 			console.log(`AUTH URL ` + url.data);

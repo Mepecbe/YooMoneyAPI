@@ -18,7 +18,7 @@ import { Scopes } from './enums';
 import { stringify } from 'uuid';
 import { Request } from 'express';
 import { Validators } from './validators';
-import { Operation, OperationInfo } from './types';
+import { DetailedOperationInfo, Operation, OperationInfo } from './types';
 
 class YooMoney{
 	private readonly clientid: string;
@@ -36,14 +36,14 @@ class YooMoney{
 	public readonly onPayment: Event<OperationInfo> = new Event();
 	
 
-	async auth(): Promise<RgResult<string>> {
+	async auth(scopes: Scopes[]): Promise<RgResult<string>> {
 		const clientid = this.clientid;
 
 		let body = 
 		`client_id=${this.clientid}`
 		+ `&response_type=code`
 		+ `&redirect_uri=${this.CallbackUrl}`
-		+ `&scope=${Scopes.AccountInfo} ${Scopes.OperationsDetails} ${Scopes.OperationsHistory}`
+		+ `&scope=${scopes.join(' ')}`
 		+ `&instance_name=1123`;
 		
 		body = encodeURI(body);
@@ -150,31 +150,38 @@ class YooMoney{
 		return resp;
 	}
 
-	async getOperationsDetails(operationId: string): Promise<RgResult<string>>{
-		const query = encodeURI(`operation_id=${operationId}`);
+	async getOperationsDetails(operationId: string): Promise<RgResult<DetailedOperationInfo>>{
+		const query = `operation_id=${operationId}`;
 		
 		const req: RequestOptions = {
 			method: "POST",
 			path: ApiEndpoints.OperationDetails + '?' + query,
 			headers: {
-				"Authorization": "Bearer " + this.authToken
+				"Authorization": "Bearer " + this.authToken,
+				"Content-Type": "application/x-www-form-urlencoded"
 			}
 		};
 
-		const resp = await this.WebClient.request(req, null);
+		const resp = await this.WebClient.request(req, Buffer.from(query));
 		
-		console.log(req);
-
 		if (resp.is_success){
 			const json = JSON.parse(resp.data);
-			console.log(json);
+			const validated = Validators.getValidateDetailedOperationInfo(json);
 
-			if (typeof(json.access_token) == "string"){
+			if (validated){
 				return {
 					is_success: true,
-					data: json.access_token
+					data: validated
 				};
 			}
+
+			return {
+				is_success: false,
+				error: {
+					code: 1,
+					message: "validate error"
+				}
+			};
 		}
 
 		return resp;

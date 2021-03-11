@@ -1,4 +1,5 @@
 import { 
+	DetailedOperationInfo,
 	NotificationType, 
 	notificationTypes, 
 	Operation, 
@@ -184,6 +185,77 @@ class Validators{
 			type: data.type as OperationType,
 			amount_currency: data.amount_currency,
 			is_sbp_operation: data.is_sbp_operation,
+		};
+	}
+
+	static getValidateDetailedOperationInfo(data: unknown): DetailedOperationInfo | null{
+		if (!Validators.isStruct(data)) {
+			return null;
+		}
+
+		if (typeof(data.group_id) !== "string"){
+			return null;
+		}	
+
+		if (typeof(data.operation_id) !== "string"){
+			return null;
+		}	
+
+		if (typeof(data.title) !== "string"){
+			return null;
+		}		
+	
+		if (typeof(data.amount) !== "number"){
+			return null;
+		}
+	
+		if (typeof(data.direction) !== "string"){
+			return null;
+		}
+	
+		if (typeof(data.datetime) !== "string"){
+			return null;
+		}
+	
+		if (typeof(data.status) !== "string"){
+			return null;
+		}
+
+	
+		if (Validators.getValidatedoperationsTypes(data.type) == null){
+			return null;
+		}
+	
+		if (typeof(data.amount_currency) !== "string"){
+			return null;
+		}
+	
+		if (typeof(data.is_sbp_operation) !== "boolean"){
+			return null;
+		}
+		
+		if (typeof(data.message) !== "string"){
+			return null;
+		}
+	
+		if (typeof(data.details) !== "string"){
+			return null;
+		}
+
+	
+		return {
+			group_id: data.group_id,
+			operation_id: data.operation_id,
+			title: data.title,
+			amount: data.amount,
+			direction: data.direction,
+			datetime: data.datetime,
+			status: data.status,
+			type: data.type as OperationType,
+			amount_currency: data.amount_currency,
+			is_sbp_operation: data.is_sbp_operation,
+			message: data.message,
+			details: data.details
 		};
 	}
 }

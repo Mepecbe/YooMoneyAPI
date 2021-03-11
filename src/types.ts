@@ -24,6 +24,11 @@ type Operation = {
 	is_sbp_operation: boolean;
 };
 
+type DetailedOperationInfo = Operation & {
+	message: string;
+	details: string;
+};
+
 const operationsTypes = [
 	"deposition",
 	"payment",
@@ -48,5 +53,6 @@ export {
 	notificationTypes,
 	Operation,
 	operationsTypes,
-	OperationType
+	OperationType,
+	DetailedOperationInfo
 };
