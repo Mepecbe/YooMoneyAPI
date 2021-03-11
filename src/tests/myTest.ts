@@ -2,6 +2,7 @@
 import { Colors } from "rg";
 import { Scopes } from "../enums";
 import { YooMoney } from "../index";
+import { operationsTypes } from "../types";
 import { config, Config } from "./config";
 
 async function main(): Promise<void> {
@@ -12,14 +13,34 @@ async function main(): Promise<void> {
 		"yoomoney.ru"
 	);
 
-	// eslint-disable-next-line max-len
-	api.authToken = "4100116305198344.D628A5CE204674923B3D09DF22AA5077327548204ABBB71662DEA3CEB89D40CD62D0AC56FFEB4D94EF539695AE9FA4975F58EC4F91E50DA40E2010975ED62A7EB256FA5C8E293B40FC45270E94F686E08296B63740011BD6FACBE7663B3B5917669DA83D10778620BA1A4B0695DB80EA53E277793BF7CEA0B034C8FD42C82DEC";
+	{
+		api.onReceiveToken.on(async (token) => {
+			console.log(`[onReceiveToken] принял токен ${token}`);
+			console.log(`[onReceiveToken] запрашиваю авторизационный токен...`);
 	
-	/*
-	setTimeout(() => {
-		api.getOperationsHistory(10);
-	}, 5000);*/
+			const authToken = await api.getAuthToken(token);
+	
+			if (authToken.is_success){
+				console.log(`[onReceiveToken] authToken ${authToken.data}`);
+			} else {
+				console.log(`[onReceiveToken] error`);
+				console.log(authToken);
+			}
+		});
+	}
 
+	// eslint-disable-next-line max-len
+	api.authToken = "4100116305198344.14B285890D29C3E615A54185028C61C11FC061F2A72BC5EC98D0C9D63715C107F6A79D6FCF44365705CDBBA47232A588907851362A350F09E70F6868752C7F710E6A701725154B8AA03D0E580CA5C116FE8CB50FA39539798A69216B961E5D86060EE9B36AC534126619401B255889DC47D4F3FF02296AF99D47BBA76AEBD990";
+	
+	const operationsResult = await api.getOperationsHistory(10);
+
+	if (operationsResult.is_success){
+		console.log(operationsResult.data);
+	} else {
+		console.log(operationsResult.error);
+	}
+
+	/*
 	setTimeout(async () => {
 		const operations = await api.getOperationsHistory(10);
 
@@ -36,33 +57,25 @@ async function main(): Promise<void> {
 		}
 	}, 2000);
 
-	api.onReceiveToken.on(async (token) => {
-		console.log(`[onReceiveToken] принял токен ${token}`);
-		console.log(`[onReceiveToken] запрашиваю авторизационный токен...`);
-
-		const authToken = await api.getAuthToken(token);
-
-		if (authToken.is_success){
-			console.log(`[onReceiveToken] authToken ${authToken.data}`);
-		} else {
-			console.log(`[onReceiveToken] error`);
-			console.log(authToken);
-		}
-	});
+	
 
 	api.onPayment.on(async (info) => {
 		console.log(`==== ON PAYMENT ====`);
 		console.log(info);
-	});
+	});*/
 
+	
 	{
 		api.run();
-		const url = await api.auth(
+		const url = await api.getAuthUrl(
 			[Scopes.AccountInfo, Scopes.OperationsDetails, Scopes.OperationsHistory, Scopes.IncomingTransfers]
 		);
 
 		if (url.is_success){
 			console.log(`AUTH URL ` + url.data);
+		} else {
+			console.log(`error get auth url`);
+			console.log(url.error.message);
 		}
 	}
 

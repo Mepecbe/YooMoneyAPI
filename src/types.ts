@@ -1,4 +1,5 @@
-type OperationInfo = {
+/**Информация об операции (уведомление ЮМани) */
+type NotificatonOperationInfo = {
 	notification_type: NotificationType;
 	bill_id: string;
 	amount: string;
@@ -11,6 +12,7 @@ type OperationInfo = {
 	label: string;
 };
 
+/**Краткая информация об операции */
 type Operation = {
 	group_id: string;
 	operation_id: string;
@@ -24,10 +26,18 @@ type Operation = {
 	is_sbp_operation: boolean;
 };
 
+/**Полная информация об операции */
 type DetailedOperationInfo = Operation & {
 	message: string;
 	details: string;
 };
+
+type YooMoneyError = {
+	error: string;
+	error_description?: string;
+};
+
+/**=== */
 
 const operationsTypes = [
 	"deposition",
@@ -40,6 +50,7 @@ const operationsTypes = [
 
 type OperationType = typeof operationsTypes[number];
 
+/**=== */
 
 const notificationTypes = [
 	"p2p-incoming"
@@ -47,12 +58,26 @@ const notificationTypes = [
 
 type NotificationType = typeof notificationTypes[number];
 
+/**=== */
+
+const spendingCategories = [
+	"Deposition"
+] as const;
+
+type SpendingCategories = {
+	name: typeof spendingCategories[number];
+	sum: number;
+};
+
+
+
 export {
-	OperationInfo,
+	NotificatonOperationInfo,
 	NotificationType,
 	notificationTypes,
 	Operation,
 	operationsTypes,
 	OperationType,
-	DetailedOperationInfo
+	DetailedOperationInfo,
+	YooMoneyError
 };

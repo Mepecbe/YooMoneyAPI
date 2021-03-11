@@ -3,9 +3,10 @@ import {
 	NotificationType, 
 	notificationTypes, 
 	Operation, 
-	OperationInfo, 
+	NotificatonOperationInfo, 
 	operationsTypes, 
-	OperationType 
+	OperationType, 
+	YooMoneyError
 } from "./types";
 
 class Validators{
@@ -31,7 +32,7 @@ class Validators{
 		return null;
 	}
 
-	static getValidateOperationInfo(data: unknown): OperationInfo | null{
+	static getValidateOperationInfo(data: unknown): NotificatonOperationInfo | null{
 		if (!Validators.isStruct(data)) {
 			return null;
 		}
@@ -242,7 +243,6 @@ class Validators{
 			return null;
 		}
 
-	
 		return {
 			group_id: data.group_id,
 			operation_id: data.operation_id,
@@ -256,6 +256,40 @@ class Validators{
 			is_sbp_operation: data.is_sbp_operation,
 			message: data.message,
 			details: data.details
+		};
+	}
+
+	static getValidatedAuthToken(data: unknown): string | null{
+		if (!Validators.isStruct(data)) {
+			return null;
+		}
+
+		if (typeof(data.access_token) !== "string"){
+			return null;
+		}
+
+		return data.access_token;
+	}
+
+	static getValidateError(data: unknown): YooMoneyError | null{
+		if (!Validators.isStruct(data)) {
+			return null;
+		}
+
+		if (typeof(data.error) !== "string"){
+			return null;
+		}
+
+		if (
+			typeof(data.error_description) !== "string" 
+			&& typeof(data.error_description) !== "undefined"
+		){
+			return null;
+		}
+
+		return {
+			error: data.error,
+			error_description: data.error_description
 		};
 	}
 }

@@ -1,5 +1,4 @@
-import { RgResult, RgSuccess, Event, format } from 'rg';
-import { ApiUtils } from "./utils";
+import { RgResult, RgSuccess, Event, format, RgError } from 'rg';
 
 import * as ExpressFramework from "express";
 import * as BodyParser from "body-parser";
@@ -18,7 +17,7 @@ import { Scopes } from './enums';
 import { stringify } from 'uuid';
 import { Request } from 'express';
 import { Validators } from './validators';
-import { DetailedOperationInfo, Operation, OperationInfo } from './types';
+import { DetailedOperationInfo, Operation, NotificatonOperationInfo, YooMoneyError } from './types';
 
 class YooMoney{
 	private readonly clientid: string;
@@ -33,12 +32,9 @@ class YooMoney{
 	authToken = "";
 
 	public readonly onReceiveToken: Event<string> = new Event();
-	public readonly onPayment: Event<OperationInfo> = new Event();
-	
+	public readonly onPayment: Event<NotificatonOperationInfo> = new Event();
 
-	async auth(scopes: Scopes[]): Promise<RgResult<string>> {
-		const clientid = this.clientid;
-
+	async getAuthUrl(scopes: Scopes[]): Promise<RgResult<string>> {
 		let body = 
 		`client_id=${this.clientid}`
 		+ `&response_type=code`
@@ -71,14 +67,15 @@ class YooMoney{
 		return resp;
 	}
 
+	/**Запросить у сервера токен используя временный ключ */
 	async getAuthToken(code: string): Promise<RgResult<string>> {
-		let body = 
-			`code=${code}`
-			+ `&client_id=${this.clientid}`
-			+ `&grant_type=authorization_code`
-			+ `&redirect_uri=${this.CallbackUrl}`;
-
-		body = encodeURI(body);
+		const body =
+			encodeURI(
+				`code=${code}`
+				+ `&client_id=${this.clientid}`
+				+ `&grant_type=authorization_code`
+				+ `&redirect_uri=${this.CallbackUrl}`
+			);
 		
 		const req: RequestOptions = {
 			method: "POST",
@@ -88,16 +85,60 @@ class YooMoney{
 		const resp = await this.WebClient.request(req, null);
 		
 		if (resp.is_success){
-			const json = JSON.parse(resp.data);
+			const json: unknown | null = JSON.parse(resp.data);
 
-			if (typeof(json.access_token) == "string"){
-				this.authToken = json.access_token;
+			if (json){
+				const error = Validators.getValidateError(json);
+
+				if (error){
+					return {
+						is_success: false,
+						error: {
+							code: 1,
+							message: 
+							error.error
+							+ error.error_description ? "\n" + error.error_description : ""
+						}
+					};
+				}
+
+				const token = Validators.getValidatedAuthToken(json);
+
+				if (token != null){
+					if (token.length == 0){
+						return {
+							is_success: false,
+							error: {
+								code: 1,
+								message: `Token is empty! Unknown error`
+							}
+						};
+					}
+					
+					this.authToken = token;
+
+					return {
+						is_success: true,
+						data: token
+					};
+				}
 
 				return {
-					is_success: true,
-					data: json.access_token
+					is_success: false,
+					error: {
+						code: 1,
+						message: "Validation error"
+					}
 				};
 			}
+			
+			return {
+				is_success: false,
+				error: {
+					code: 1,
+					message: `Error parse JSON`
+				}
+			};
 		}
 
 		return resp;
@@ -114,11 +155,27 @@ class YooMoney{
 			}
 		};
 
-		const resp = await this.WebClient.request(req, null);
+		const response = await this.WebClient.request(req, null);
 		
-		if (resp.is_success){
-			const json = JSON.parse(resp.data);
+		if (response.is_success){
+			const json = JSON.parse(response.data);
+
+			console.log(response.data);
+
+			{
+				const error = Validators.getValidateError(json);
 			
+				if (error){
+					return {
+						is_success: false,
+						error: {
+							code: 1,
+							message: error.error
+						}
+					};
+				}
+			}
+
 			if (!Array.isArray(json.operations)){
 				return {
 					is_success: false,
@@ -147,12 +204,12 @@ class YooMoney{
 			};
 		}
 
-		return resp;
+		return response;
 	}
 
 	async getOperationsDetails(operationId: string): Promise<RgResult<DetailedOperationInfo>>{
 		const query = `operation_id=${operationId}`;
-		
+
 		const req: RequestOptions = {
 			method: "POST",
 			path: ApiEndpoints.OperationDetails + '?' + query,
