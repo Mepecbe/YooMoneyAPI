@@ -244,8 +244,6 @@ class YooMoney{
 		if (resp.is_success){
 			const json: unknown | null = JSON.parse(resp.data);
 
-			console.log(json);
-
 			if (json){
 				const error = Validators.getValidateError(json);
 
