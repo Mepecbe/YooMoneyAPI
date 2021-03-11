@@ -228,18 +228,16 @@ class YooMoney{
 
 
 	async getOperationsDetails(operationId: string): Promise<RgResult<DetailedOperationInfo>>{
-		const query = `operation_id=${operationId}`;
-
 		const req: RequestOptions = {
 			method: "POST",
-			path: ApiEndpoints.OperationDetails + '?' + query,
+			path: ApiEndpoints.OperationDetails,
 			headers: {
 				"Authorization": "Bearer " + this.authToken,
 				"Content-Type": "application/x-www-form-urlencoded"
 			}
 		};
 
-		const resp = await this.WebClient.request(req, Buffer.from(query));
+		const resp = await this.WebClient.request(req, Buffer.from(`operation_id=${operationId}`));
 		
 		if (resp.is_success){
 			const json: unknown | null = JSON.parse(resp.data);
