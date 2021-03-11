@@ -1,4 +1,11 @@
-import { NotificationType, notificationTypes, OperationInfo } from "./types";
+import { 
+	NotificationType, 
+	notificationTypes, 
+	Operation, 
+	OperationInfo, 
+	operationsTypes, 
+	OperationType 
+} from "./types";
 
 class Validators{
 	public static isStruct(data: unknown): data is Record<string, unknown> {
@@ -80,6 +87,103 @@ class Validators{
 			operation_id: data.operation_id,
 			currency: data.currency,
 			label: data.label,
+		};
+	}
+
+	static getValidatedoperationsTypes(input: unknown): OperationType | null {
+		if (typeof input !== "string") {
+			return null;
+		}
+	
+		for (const val of operationsTypes) {
+			if (input === val) {
+				return input;
+			}
+		}
+	
+		return null;
+	}
+
+	static getValidateOperations(data: unknown): Operation[] | null{
+		if (!Validators.isStruct(data)) {
+			return null;
+		}
+
+		const ops: Operation[] = [];
+
+		if (Array.isArray(data)){
+			for (const rec of data){
+				const valid = Validators.getValidateOperation(rec);
+
+				if (valid){
+					ops.push(rec);
+				}
+			}
+
+			return ops;
+		}
+		
+		return null;
+	}
+	
+	static getValidateOperation(data: unknown): Operation | null{
+		if (!Validators.isStruct(data)) {
+			return null;
+		}
+
+		if (typeof(data.group_id) !== "string"){
+			return null;
+		}	
+
+		if (typeof(data.operation_id) !== "string"){
+			return null;
+		}	
+
+		if (typeof(data.title) !== "string"){
+			return null;
+		}		
+	
+		if (typeof(data.amount) !== "number"){
+			return null;
+		}
+	
+		if (typeof(data.direction) !== "string"){
+			return null;
+		}
+	
+		if (typeof(data.datetime) !== "string"){
+			return null;
+		}
+	
+		if (typeof(data.status) !== "string"){
+			return null;
+		}
+
+	
+		if (Validators.getValidatedoperationsTypes(data.type) == null){
+			return null;
+		}
+	
+		if (typeof(data.amount_currency) !== "string"){
+			return null;
+		}
+	
+		if (typeof(data.is_sbp_operation) !== "boolean"){
+			return null;
+		}
+
+	
+		return {
+			group_id: data.group_id,
+			operation_id: data.operation_id,
+			title: data.title,
+			amount: data.amount,
+			direction: data.direction,
+			datetime: data.datetime,
+			status: data.status,
+			type: data.type as OperationType,
+			amount_currency: data.amount_currency,
+			is_sbp_operation: data.is_sbp_operation,
 		};
 	}
 }

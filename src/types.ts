@@ -11,6 +11,31 @@ type OperationInfo = {
 	label: string;
 };
 
+type Operation = {
+	group_id: string;
+	operation_id: string;
+	title: string;
+	amount: number;
+	direction: string;
+	datetime: string;
+	status: string;
+	type: OperationType;
+	amount_currency: string;
+	is_sbp_operation: boolean;
+};
+
+const operationsTypes = [
+	"deposition",
+	"payment",
+	"incoming-transfers-unaccepted",
+	"incoming-transfer",
+	"payment-shop",
+	"outgoing-transfer"
+] as const;
+
+type OperationType = typeof operationsTypes[number];
+
+
 const notificationTypes = [
 	"p2p-incoming"
 ] as const;
@@ -20,5 +45,8 @@ type NotificationType = typeof notificationTypes[number];
 export {
 	OperationInfo,
 	NotificationType,
-	notificationTypes
+	notificationTypes,
+	Operation,
+	operationsTypes,
+	OperationType
 };
