@@ -33,11 +33,22 @@ async function main(): Promise<void> {
 	api.authToken = "4100116305198344.14B285890D29C3E615A54185028C61C11FC061F2A72BC5EC98D0C9D63715C107F6A79D6FCF44365705CDBBA47232A588907851362A350F09E70F6868752C7F710E6A701725154B8AA03D0E580CA5C116FE8CB50FA39539798A69216B961E5D86060EE9B36AC534126619401B255889DC47D4F3FF02296AF99D47BBA76AEBD990";
 	
 	const operationsResult = await api.getOperationsHistory(10);
+	let opId = "";
 
 	if (operationsResult.is_success){
-		console.log(operationsResult.data);
+		//console.log(operationsResult.data);
+		opId = operationsResult.data[0].operation_id;
 	} else {
 		console.log(operationsResult.error);
+	}
+
+	const detailedOperationInfo = await api.getOperationsDetails(opId);
+
+	if (detailedOperationInfo.is_success){
+		console.log(`detailed info`);
+		console.log(detailedOperationInfo.data);
+	} else {
+		console.log(detailedOperationInfo.error);
 	}
 
 	/*

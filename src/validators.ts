@@ -6,7 +6,11 @@ import {
 	NotificatonOperationInfo, 
 	operationsTypes, 
 	OperationType, 
-	YooMoneyError
+	YooMoneyError,
+	directionTypes,
+	DirectionType,
+	paymentStatus,
+	PaymentStatus
 } from "./types";
 
 class Validators{
@@ -127,6 +131,34 @@ class Validators{
 		
 		return null;
 	}
+
+	static getValidatedDirection(input: unknown): DirectionType | null {
+		if (typeof input !== "string") {
+			return null;
+		}
+	
+		for (const val of directionTypes) {
+			if (input === val) {
+				return input;
+			}
+		}
+	
+		return null;
+	}
+
+	static getValidatePaymentStatus(input: unknown): PaymentStatus | null {
+		if (typeof input !== "string") {
+			return null;
+		}
+	
+		for (const val of paymentStatus) {
+			if (input === val) {
+				return input;
+			}
+		}
+	
+		return null;
+	}
 	
 	static getValidateOperation(data: unknown): Operation | null{
 		if (!Validators.isStruct(data)) {
@@ -161,8 +193,11 @@ class Validators{
 			return null;
 		}
 
-	
 		if (Validators.getValidatedoperationsTypes(data.type) == null){
+			return null;
+		}
+
+		if (Validators.getValidatedDirection(data.direction) == null){
 			return null;
 		}
 	
@@ -174,15 +209,18 @@ class Validators{
 			return null;
 		}
 
-	
+		if (Validators.getValidatePaymentStatus(data.status) == null){
+			return null;
+		}
+
 		return {
 			group_id: data.group_id,
 			operation_id: data.operation_id,
 			title: data.title,
 			amount: data.amount,
-			direction: data.direction,
+			direction: data.direction as DirectionType,
 			datetime: data.datetime,
-			status: data.status,
+			status: data.status as PaymentStatus,
 			type: data.type as OperationType,
 			amount_currency: data.amount_currency,
 			is_sbp_operation: data.is_sbp_operation,
@@ -222,8 +260,11 @@ class Validators{
 			return null;
 		}
 
-	
 		if (Validators.getValidatedoperationsTypes(data.type) == null){
+			return null;
+		}
+		
+		if (Validators.getValidatedDirection(data.direction) == null){
 			return null;
 		}
 	
@@ -243,19 +284,33 @@ class Validators{
 			return null;
 		}
 
+		if (typeof(data.sender) !== "string"){
+			return null;
+		}
+
+		if (typeof(data.codepro) !== "boolean"){
+			return null;
+		}
+
+		if (Validators.getValidatePaymentStatus(data.status) == null){
+			return null;
+		}
+
 		return {
 			group_id: data.group_id,
 			operation_id: data.operation_id,
 			title: data.title,
 			amount: data.amount,
-			direction: data.direction,
+			direction: data.direction as DirectionType,
 			datetime: data.datetime,
-			status: data.status,
+			status: data.status as PaymentStatus,
 			type: data.type as OperationType,
 			amount_currency: data.amount_currency,
 			is_sbp_operation: data.is_sbp_operation,
 			message: data.message,
-			details: data.details
+			details: data.details,
+			sender: data.sender,
+			codepro: data.codepro
 		};
 	}
 
@@ -281,7 +336,7 @@ class Validators{
 		}
 
 		if (
-			typeof(data.error_description) !== "string" 
+			typeof(data.error_description) !== "string"
 			&& typeof(data.error_description) !== "undefined"
 		){
 			return null;

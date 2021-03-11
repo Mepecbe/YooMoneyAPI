@@ -94,10 +94,10 @@ class YooMoney{
 					return {
 						is_success: false,
 						error: {
-							code: 1,
-							message: 
-							error.error
-							+ error.error_description ? "\n" + error.error_description : ""
+							code: 
+								1,
+							message:
+								error.error
 						}
 					};
 				}
@@ -109,8 +109,10 @@ class YooMoney{
 						return {
 							is_success: false,
 							error: {
-								code: 1,
-								message: `Token is empty! Unknown error`
+								code: 
+									1,
+								message: 
+									`Token is empty! Unknown error`
 							}
 						};
 					}
@@ -158,40 +160,58 @@ class YooMoney{
 		const response = await this.WebClient.request(req, null);
 		
 		if (response.is_success){
-			const json = JSON.parse(response.data);
+			const json: unknown | null = JSON.parse(response.data);
 
-			console.log(response.data);
-
-			{
+			if (json){
 				const error = Validators.getValidateError(json);
 			
 				if (error){
 					return {
 						is_success: false,
 						error: {
-							code: 1,
-							message: error.error
+							code: 
+								1,
+							message: 
+								error.error
 						}
 					};
 				}
-			}
+				
+				if (!Validators.isStruct(json)){
+					return {
+						is_success: false,
+						error: {
+							code: 1,
+							message: "Validation error"
+						}
+					};
+				}
 
-			if (!Array.isArray(json.operations)){
+				if (!Array.isArray(json.operations)){
+					return {
+						is_success: false,
+						error: {
+							code: 1,
+							message: "Validation error"
+						}
+					};
+				}
+
+				const validatedOperations = Validators.getValidateOperations(json.operations);
+
+				if (validatedOperations){
+					return {
+						is_success: true,
+						data: validatedOperations
+					};
+				}
+
 				return {
 					is_success: false,
 					error: {
 						code: 1,
-						message: "unknown error"
+						message: "Validation error"
 					}
-				};
-			}
-
-			const validatedOperations = Validators.getValidateOperations(json.operations);
-			
-			if (validatedOperations){
-				return {
-					is_success: true,
-					data: validatedOperations
 				};
 			}
 
@@ -199,13 +219,13 @@ class YooMoney{
 				is_success: false,
 				error: {
 					code: 1,
-					message: "Validate error"
+					message: "Error parse JSON"
 				}
 			};
 		}
-
 		return response;
 	}
+
 
 	async getOperationsDetails(operationId: string): Promise<RgResult<DetailedOperationInfo>>{
 		const query = `operation_id=${operationId}`;
@@ -222,13 +242,40 @@ class YooMoney{
 		const resp = await this.WebClient.request(req, Buffer.from(query));
 		
 		if (resp.is_success){
-			const json = JSON.parse(resp.data);
-			const validated = Validators.getValidateDetailedOperationInfo(json);
+			const json: unknown | null = JSON.parse(resp.data);
 
-			if (validated){
+			console.log(json);
+
+			if (json){
+				const error = Validators.getValidateError(json);
+
+				if (error){
+					return {
+						is_success: false,
+						error: {
+							code: 
+								1,
+							message: 
+								error.error
+						}
+					};
+				}
+
+				const validated = Validators.getValidateDetailedOperationInfo(json);
+
+				if (validated){
+					return {
+						is_success: true,
+						data: validated
+					};
+				}
+
 				return {
-					is_success: true,
-					data: validated
+					is_success: false,
+					error: {
+						code: 1,
+						message: "Validation error"
+					}
 				};
 			}
 
@@ -236,7 +283,7 @@ class YooMoney{
 				is_success: false,
 				error: {
 					code: 1,
-					message: "validate error"
+					message: `Error parse JSON`
 				}
 			};
 		}

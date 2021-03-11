@@ -18,9 +18,9 @@ type Operation = {
 	operation_id: string;
 	title: string;
 	amount: number;
-	direction: string;
+	direction: DirectionType;
 	datetime: string;
-	status: string;
+	status: PaymentStatus;
 	type: OperationType;
 	amount_currency: string;
 	is_sbp_operation: boolean;
@@ -30,6 +30,8 @@ type Operation = {
 type DetailedOperationInfo = Operation & {
 	message: string;
 	details: string;
+	sender: string;
+	codepro: boolean;
 };
 
 type YooMoneyError = {
@@ -69,15 +71,45 @@ type SpendingCategories = {
 	sum: number;
 };
 
+/**=== */
+
+const directionTypes = [
+	"in",
+	"out"
+] as const;
+
+type DirectionType = typeof directionTypes[number];
+
+/**=== */
+
+const paymentStatus = [
+	"success",
+	"refused",
+	"in_progress"
+] as const;
+
+type PaymentStatus = typeof paymentStatus[number];
+
+/**=== */
 
 
 export {
 	NotificatonOperationInfo,
+
 	NotificationType,
 	notificationTypes,
+
 	Operation,
+
 	operationsTypes,
 	OperationType,
+
 	DetailedOperationInfo,
-	YooMoneyError
+	YooMoneyError,
+
+	directionTypes,
+	DirectionType,
+
+	paymentStatus,
+	PaymentStatus
 };
