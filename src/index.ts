@@ -1,4 +1,4 @@
-import { RgResult, RgSuccess, Event } from 'rg';
+import { RgResult, RgSuccess, Event, format } from 'rg';
 import { ApiUtils } from "./utils";
 
 import * as ExpressFramework from "express";
@@ -185,6 +185,36 @@ class YooMoney{
 		}
 
 		return resp;
+	}
+	
+
+	genPaymentUrl(
+		paymentName: string,
+		amount: number,
+		to: string
+	): string {
+		let baseUrl = "https://yoomoney.ru/quickpay/shop-widget"
+			+ "?writer=seller"
+			+ "&targets={paymentName}"
+			+ "&targets-hint="
+			+ "&default-sum={amount}"
+			+ "&button-text=12"
+			+ "&hint="
+			+ "&successURL="
+			+ "&quickpay=shop"
+			+ "&account={to}";
+
+		baseUrl = format(
+			baseUrl,
+			{
+				paymentName,
+				amount,
+				to
+			}
+		);
+
+		
+		return encodeURI(baseUrl);
 	}
 
 	run(): void{
