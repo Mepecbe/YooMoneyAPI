@@ -1,6 +1,7 @@
 {
-	"YooMoney": {
+	"yoomoney": {
 		"Key": "",
-		"CallbackUrl": ""
+		"CallbackUrl": "",
+		"AuthToken": ""
 	}
 }

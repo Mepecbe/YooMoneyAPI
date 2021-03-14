@@ -1,4 +1,10 @@
-import { RgResult, RgSuccess, Event, format, RgError } from 'rg';
+import { 
+	RgResult,
+	RgSuccess,
+	Event,
+	format,
+	RgError
+} from 'rg';
 
 import * as ExpressFramework from "express";
 import * as BodyParser from "body-parser";
@@ -17,7 +23,13 @@ import { Scopes } from './enums';
 import { stringify } from 'uuid';
 import { Request } from 'express';
 import { Validators } from './validators';
-import { DetailedOperationInfo, Operation, NotificatonOperationInfo, YooMoneyError } from './types';
+import { 
+	DetailedOperationInfo,
+	Operation,
+	NotificatonOperationInfo, 
+	YooMoneyError, 
+	AccountInfo
+} from './types';
 
 class YooMoney{
 	private readonly clientid: string;
@@ -29,11 +41,32 @@ class YooMoney{
 	private readonly CallbackUrl: string;
 	private readonly Server: ExpressFramework.Express;
 
-	authToken = "";
-
+	/**Событие срабатывает, когда сервер яндекса присылает временный токен */
 	public readonly onReceiveToken: Event<string> = new Event();
 	public readonly onPayment: Event<NotificatonOperationInfo> = new Event();
+	
+	authToken = "";
 
+	private getAuthorizedRequestOptions(
+		method: string, 
+		path: string,
+		query: string | undefined
+	): RequestOptions {
+		return {
+			method,
+			path: path + (query ? encodeURI(`?${query}`) : ""),
+			headers: {
+				"Authorization": "Bearer " + this.authToken
+			}
+		};
+	}
+
+	/**
+	 * Запросить авторизацию
+	 * https://yoomoney.ru/docs/wallet/using-api/authorization/request-access-token
+	 * @param {Scopes} scopes Запрашиваемые права
+	 * @returns {string} Ссылка на страницу авторизации
+	 */
 	async getAuthUrl(scopes: Scopes[]): Promise<RgResult<string>> {
 		let body = 
 		`client_id=${this.clientid}`
@@ -46,7 +79,10 @@ class YooMoney{
 
 		const req: RequestOptions = {
 			method: "POST",
-			path: ApiEndpoints.Auth + '?' + body
+			path: ApiEndpoints.Auth + '?' + body,
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded"
+			}
 		};
 		
 		const resp = await this.WebClient.request(req, null);
@@ -67,11 +103,14 @@ class YooMoney{
 		return resp;
 	}
 
-	/**Запросить у сервера токен используя временный ключ */
-	async getAuthToken(code: string): Promise<RgResult<string>> {
+	/**Запросить у сервера токен авторизации, используя временный токен присланный яндексом
+	 * https://yoomoney.ru/docs/wallet/using-api/authorization/obtain-access-token
+	 * @param {string} key Временный токен
+	 */
+	async getAuthToken(key: string): Promise<RgResult<string>> {
 		const body =
 			encodeURI(
-				`code=${code}`
+				`code=${key}`
 				+ `&client_id=${this.clientid}`
 				+ `&grant_type=authorization_code`
 				+ `&redirect_uri=${this.CallbackUrl}`
@@ -146,19 +185,65 @@ class YooMoney{
 		return resp;
 	}
 
-	async getOperationsHistory(count: number): Promise<RgResult<Operation[]>>{
-		const query = encodeURI(`records=${count}`);
-		
-		const req: RequestOptions = {
-			method: "POST",
-			path: ApiEndpoints.OperationsHistory + '?' + query,
-			headers: {
-				"Authorization": "Bearer " + this.authToken
+	async getAccountInfo(): Promise<RgResult<AccountInfo>> {
+		const reqOptions = 
+			this.getAuthorizedRequestOptions("POST", ApiEndpoints.AccountInfo, undefined);
+
+		const resp = await this.WebClient.request(reqOptions, null);
+
+		if (resp.is_success){
+			const json: unknown | null = JSON.parse(resp.data);
+
+			if (json){
+				console.log(json);
+
+				const validated = Validators.getValidateAccountInfo(json);
+
+				if (validated){
+					return { 
+						is_success: true,
+						data: validated
+					};
+				}
+				
+				return {
+					is_success: false,
+					error: {
+						code: 1,
+						message: `Validation error`
+					}
+				};
 			}
+			
+			return {
+				is_success: false,
+				error: {
+					code: 1,
+					message: `Error parse JSON`
+				}
+			};
+		}
+
+		return {
+			is_success: false,
+			error: resp.error
 		};
+	}
+
+	/**
+	 * Получить историю операций
+	 * @param {number} count Количество
+	 */
+	async getOperationsHistory(count: number): Promise<RgResult<Operation[]>> {
+		const req =
+			this.getAuthorizedRequestOptions(
+				"POST",
+				ApiEndpoints.OperationsHistory,
+				`records=${count}`
+			);
 
 		const response = await this.WebClient.request(req, null);
-		
+
 		if (response.is_success){
 			const json: unknown | null = JSON.parse(response.data);
 
@@ -169,9 +254,9 @@ class YooMoney{
 					return {
 						is_success: false,
 						error: {
-							code: 
+							code:
 								1,
-							message: 
+							message:
 								error.error
 						}
 					};
@@ -227,19 +312,23 @@ class YooMoney{
 	}
 
 
-	async getOperationsDetails(operationId: string): Promise<RgResult<DetailedOperationInfo>>{
-		const req: RequestOptions = {
-			method: "POST",
-			path: ApiEndpoints.OperationDetails,
-			headers: {
-				"Authorization": "Bearer " + this.authToken,
-				"Content-Type": "application/x-www-form-urlencoded"
-			}
-		};
+	/**
+	 * @description Получить детализированную информацию об операции
+	 * 
+	 * @param {string} operationId Идентификатор операции
+	 */
+	async getOperationDetails(operationId: string): Promise<RgResult<DetailedOperationInfo>>{
+		const req = this.getAuthorizedRequestOptions("POST", ApiEndpoints.OperationDetails, "");
+		req.headers = Object.assign(
+			req.headers,
+			{ "Content-Type": "application/x-www-form-urlencoded" }
+		);
 
 		const resp = await this.WebClient.request(req, Buffer.from(`operation_id=${operationId}`));
 		
 		if (resp.is_success){
+			console.log(resp.data);
+
 			const json: unknown | null = JSON.parse(resp.data);
 
 			if (json){
@@ -286,8 +375,14 @@ class YooMoney{
 
 		return resp;
 	}
-	
 
+	/** 
+	 * @description Сгенерировать ссылку для оплаты
+	 * 
+	 * @param paymentName Наименование плажета
+	 * @param amount Количество
+	 * @param to На какой кошелёк
+	 */
 	genPaymentUrl(
 		paymentName: string,
 		amount: number,
@@ -328,13 +423,11 @@ class YooMoney{
 	constructor(
 		clientid: string,
 		callback: string,
-		port: number,
-		baseApiUrl = "yoomoney.ru"
+		port: number
 	){
 		this.clientid = clientid;
 		
 		this.CallbackUrl = callback;
-		this.BaseApiUrl = baseApiUrl;
 		this.port = port;
 
 		{
@@ -360,7 +453,7 @@ class YooMoney{
 			
 
 			this.Server.post(`/`, async (req, res) => {
-				const jsonData: unknown = req.body;
+				const jsonData: unknown | null = req.body;
 
 				if (jsonData != null){
 					const valid = Validators.getValidateOperationInfo(jsonData);
@@ -368,10 +461,10 @@ class YooMoney{
 					if (valid != null){
 						this.onPayment.emit(valid);
 					} else {
-						console.log(`[POST] failed validate operations info`);
+						console.log(`[POST] failed validation operation info`);
 					}
 				} else {
-					console.log(`[POST] failed parse JSON`);
+					console.log(`[POST] error parse JSON`);
 					console.log(req.body);
 				}
 

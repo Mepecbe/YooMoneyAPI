@@ -8,12 +8,17 @@ type NotificatonOperationInfo = {
 	sender: string;
 	operation_label: string;
 	operation_id: string;
-	currency: string;
+	currency: CurrencyType;
 	label: string;
 };
 
 /**Краткая информация об операции */
 type Operation = {
+	/**Шаблон операции ВЫВОДА
+	 * при оплате на сервисе антиплагиата он равен 42508
+	 * при переводе между кошельками яндекса он равен p2p
+	 */
+	pattern_id?: string;
 	group_id: string;
 	operation_id: string;
 	title: string;
@@ -22,21 +27,47 @@ type Operation = {
 	datetime: string;
 	status: PaymentStatus;
 	type: OperationType;
-	amount_currency: string;
+	spendingCategories: SpendingCategories[];
+	amount_currency: CurrencyType;
 	is_sbp_operation: boolean;
 };
 
 /**Полная информация об операции */
 type DetailedOperationInfo = Operation & {
-	message: string;
-	details: string;
-	sender: string;
-	codepro: boolean;
+	message?: string;
+	details?: string;
+	sender?: string;
+	codepro?: boolean;
 };
 
 type YooMoneyError = {
 	error: string;
 	error_description?: string;
+};
+
+type LinkedCard = {
+	pan_fragment: string;
+	type: string;
+};
+
+type BalanceDetails = {
+	total: number;
+	available: number;
+	deposition_pending?: number;
+	blocked?: number;
+	debt?: number;
+	hold?: number;
+};
+
+type AccountInfo = {
+	account: string;
+	balance: number;
+	currency: string;
+	account_type: AccountType;
+	identified: boolean;
+	account_status: AccountState;
+	balance_details?: BalanceDetails;
+	cards_linked?: LinkedCard[];
 };
 
 /**=== */
@@ -51,6 +82,25 @@ const operationsTypes = [
 ] as const;
 
 type OperationType = typeof operationsTypes[number];
+
+/**=== */
+
+const accountStates = [
+	"anonymous",
+	"named",
+	"identified"
+] as const;
+
+type AccountState = typeof accountStates[number];
+
+/**=== */
+
+const accountTypes = [
+	"personal",
+	"professional"
+] as const;
+
+type AccountType= typeof accountTypes[number];
 
 /**=== */
 
@@ -80,6 +130,17 @@ const directionTypes = [
 
 type DirectionType = typeof directionTypes[number];
 
+
+/**=== */
+
+const currencies = [
+	"USD",
+	"RUB",
+	"EUR"
+] as const;
+
+type CurrencyType = typeof currencies[number];
+
 /**=== */
 
 const paymentStatus = [
@@ -107,9 +168,23 @@ export {
 	DetailedOperationInfo,
 	YooMoneyError,
 
+	AccountInfo,
+	BalanceDetails,
+	LinkedCard,
+
 	directionTypes,
 	DirectionType,
 
 	paymentStatus,
-	PaymentStatus
+	PaymentStatus,
+
+	currencies,
+	CurrencyType,
+
+	SpendingCategories,
+
+	accountStates,
+	accountTypes,
+	AccountState,
+	AccountType
 };

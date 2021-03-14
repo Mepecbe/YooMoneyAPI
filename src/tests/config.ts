@@ -4,6 +4,7 @@ import { getMergedObjects } from "rg";
 type YooMoney = {
 	readonly Key: string;
 	readonly CallbackUrl: string;
+	readonly AuthToken: string;
 };
 
 export type Config = {
