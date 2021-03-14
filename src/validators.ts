@@ -561,11 +561,8 @@ class Validators{
 			typeof(data.balance_details) !== "undefined"
 				? Validators.getValidateBalanceDetails(data.balance_details)
 				: undefined;
-	
-		console.log(`metka`);
 
 		if (balanceDetails == null){
-			console.log(`metka1`);
 			return null;
 		}
 

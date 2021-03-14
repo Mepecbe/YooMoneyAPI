@@ -185,6 +185,9 @@ class YooMoney{
 		return resp;
 	}
 
+	/**
+	 * Запрос информации об аккаунте
+	 */
 	async getAccountInfo(): Promise<RgResult<AccountInfo>> {
 		const reqOptions = 
 			this.getAuthorizedRequestOptions("POST", ApiEndpoints.AccountInfo, undefined);
@@ -195,8 +198,6 @@ class YooMoney{
 			const json: unknown | null = JSON.parse(resp.data);
 
 			if (json){
-				console.log(json);
-
 				const validated = Validators.getValidateAccountInfo(json);
 
 				if (validated){
@@ -206,6 +207,8 @@ class YooMoney{
 					};
 				}
 				
+				console.log(json);
+
 				return {
 					is_success: false,
 					error: {
@@ -214,7 +217,17 @@ class YooMoney{
 					}
 				};
 			}
-			
+
+			if (json == ""){
+				return {
+					is_success: false,
+					error: {
+						code: 2,
+						message: "Сервер ответил пустым сообщением, возможно ключ устарел"
+					}
+				};
+			}
+
 			return {
 				is_success: false,
 				error: {
@@ -327,8 +340,6 @@ class YooMoney{
 		const resp = await this.WebClient.request(req, Buffer.from(`operation_id=${operationId}`));
 		
 		if (resp.is_success){
-			console.log(resp.data);
-
 			const json: unknown | null = JSON.parse(resp.data);
 
 			if (json){
