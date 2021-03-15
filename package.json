@@ -1,5 +1,5 @@
 {
-  "name": "chatexapi",
+  "name": "yoomoney",
   "version": "1.0.0",
   "main": "dist/index.js",
   "dependencies": {
@@ -8,23 +8,17 @@
     "@types/request": "^2.48.5",
     "@types/uuid": "^8.3.0",
     "bignumber.js": "^9.0.1",
-    "coinpayments": "^2.1.1",
-    "crypto": "^1.0.1",
     "eslint-config-rg": "^1.0.9",
     "express": "^4.17.1",
     "jest": "^26.6.3",
-    "mysql": "^2.18.1",
-    "qiwi": "^1.0.4",
     "request": "^2.88.2",
     "rg": "^1.5.19",
     "rg-web": "^1.0.13",
     "source-map-support": "^0.5.19",
-    "tgui": "^2.2.14",
     "ts-crypto": "^0.0.3",
     "ts-jest": "^26.4.4",
     "typeorm": "^0.2.30",
     "typescript": "^4.1.2",
-    "uuid": "^8.3.2",
     "web-request": "^1.0.7"
   },
   "scripts": {
