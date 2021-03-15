@@ -3,7 +3,8 @@ import {
 	RgSuccess,
 	Event,
 	format,
-	RgError
+	RgError,
+	timeout
 } from 'rg';
 
 import * as ExpressFramework from "express";
@@ -18,7 +19,7 @@ import {
 	RgWeb,
 	ErrorCodes as WebErrorCodes
 } from 'rg-web';
-import { Scopes } from './enums';
+import { ChangeTrackingMethod, Scopes } from './enums';
 
 import { stringify } from 'uuid';
 import { Request } from 'express';
@@ -39,7 +40,11 @@ class YooMoney{
 
 	private readonly BaseApiUrl: string = "yoomoney.ru";
 	private readonly CallbackUrl: string;
+
 	private readonly Server: ExpressFramework.Express;
+	private readonly TrackingType: ChangeTrackingMethod;
+
+	private PollUpdater: NodeJS.Timeout | undefined;
 
 	/**Событие срабатывает, когда сервер яндекса присылает временный токен */
 	public readonly onReceiveToken: Event<string> = new Event();
@@ -206,8 +211,6 @@ class YooMoney{
 						data: validated
 					};
 				}
-				
-				console.log(json);
 
 				return {
 					is_success: false,
@@ -423,8 +426,17 @@ class YooMoney{
 		return encodeURI(baseUrl);
 	}
 
+	private async poll(): Promise<void>{
+		//pass
+
+	}
+
 	run(): void{
-		this.Server.listen(this.port);
+		if (this.TrackingType == ChangeTrackingMethod.HttpNotify){
+			this.Server.listen(this.port);
+		} else if (this.TrackingType == ChangeTrackingMethod.Poll){
+			this.PollUpdater = setInterval(this.poll, 4000);
+		}
 	}
 
 	stop(): void{
@@ -434,12 +446,15 @@ class YooMoney{
 	constructor(
 		clientid: string,
 		callback: string,
-		port: number
+		port: number,
+		trackingType: ChangeTrackingMethod
 	){
 		this.clientid = clientid;
 		
 		this.CallbackUrl = callback;
 		this.port = port;
+
+		this.TrackingType = trackingType;
 
 		{
 			this.Server = ExpressFramework();
@@ -482,6 +497,7 @@ class YooMoney{
 				res.statusCode = 200;
 			});
 		}
+		
 		
 		this.WebClient = new RgWeb(this.BaseApiUrl, 443, "HTTPS");
 	}

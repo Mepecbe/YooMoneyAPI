@@ -14,8 +14,18 @@ enum Scopes{
 	MoneySource = "money-source"
 }
 
+/**
+ * Метод отслеживания изменений кошелька (расход/приход средств)
+ */
+enum ChangeTrackingMethod{
+	HttpNotify,
+	Poll,
+	None
+}
+
 
 
 export {
-	Scopes
+	Scopes,
+	ChangeTrackingMethod
 };
