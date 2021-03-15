@@ -113,7 +113,9 @@ type NotificationType = typeof notificationTypes[number];
 /**=== */
 
 const spendingCategories = [
-	"Deposition"
+	"Deposition",
+	"TransferWithdraw",
+	"Digital"
 ] as const;
 
 type SpendingCategories = {

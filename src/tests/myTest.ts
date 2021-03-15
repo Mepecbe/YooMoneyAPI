@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { Colors, timeout } from "rg";
-import { Scopes } from "../enums";
+import { ChangeTrackingMethod, Scopes } from "../enums";
 import { YooMoney } from "../index";
 import { operationsTypes } from "../types";
 import { config, Config } from "./config";
@@ -9,7 +9,8 @@ async function main(): Promise<void> {
 	const api = new YooMoney(
 		config.yoomoney.Key,
 		config.yoomoney.CallbackUrl,
-		4124
+		4124,
+		ChangeTrackingMethod.Poll
 	);
 
 	api.authToken = config.yoomoney.AuthToken;
@@ -53,6 +54,7 @@ async function main(): Promise<void> {
 	console.log("==   ARMED   ==");
 	console.log("===============");
 
+	/*
 	const accInfo = await api.getAccountInfo();
 
 	if (accInfo.is_success){
@@ -89,7 +91,7 @@ async function main(): Promise<void> {
 		} else {
 			console.log(`Ошибка запроса истории по операциям`);
 		}
-	}
+	}*/
 }
 
 main();

@@ -29,7 +29,8 @@ import {
 	Operation,
 	NotificatonOperationInfo, 
 	YooMoneyError, 
-	AccountInfo
+	AccountInfo,
+	CurrencyType
 } from './types';
 
 class YooMoney{
@@ -45,6 +46,7 @@ class YooMoney{
 	private readonly TrackingType: ChangeTrackingMethod;
 
 	private PollUpdater: NodeJS.Timeout | undefined;
+	private LastTxId = "";
 
 	/**Событие срабатывает, когда сервер яндекса присылает временный токен */
 	public readonly onReceiveToken: Event<string> = new Event();
@@ -427,20 +429,56 @@ class YooMoney{
 	}
 
 	private async poll(): Promise<void>{
-		//pass
+		const requestOpResult = await this.getOperationsHistory(20);
+		
+		if (requestOpResult.is_success){
+			for (const transaction of requestOpResult.data){
+				if (transaction.operation_id == this.LastTxId){
+					break;
+				}
 
+				this.onPayment.emit({
+					notification_type: "p2p-incoming",
+					bill_id: "",
+					amount: transaction.amount.toString(),
+					datetime: transaction.datetime,
+					codepro: "",
+					sender: "",
+					operation_label: transaction.title,
+					operation_id: transaction.operation_id,
+					currency: transaction.amount_currency,
+					label: ""
+				});
+			}
+
+			this.LastTxId = requestOpResult.data[0].operation_id;
+		} else {
+			console.error(`YooMoney poll error\n` + requestOpResult.error.message);
+		}
 	}
 
 	run(): void{
 		if (this.TrackingType == ChangeTrackingMethod.HttpNotify){
 			this.Server.listen(this.port);
 		} else if (this.TrackingType == ChangeTrackingMethod.Poll){
-			this.PollUpdater = setInterval(this.poll, 4000);
+			this.getOperationsHistory(1).then((result) => {
+				if (result.is_success){
+					this.LastTxId = result.data[0].operation_id;
+					this.PollUpdater = 
+							setInterval(() => this.poll(), 4000);
+				}
+			});
 		}
 	}
 
 	stop(): void{
-		//pass
+		if (this.TrackingType == ChangeTrackingMethod.Poll){
+			if (this.PollUpdater){
+				clearInterval(this.PollUpdater);
+			}
+		} else if (this.TrackingType == ChangeTrackingMethod.HttpNotify){
+			this.Server.removeAllListeners();
+		}
 	}
 
 	constructor(
