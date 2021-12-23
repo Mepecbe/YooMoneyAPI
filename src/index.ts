@@ -497,22 +497,27 @@ class YooMoney{
 		{
 			this.Server = ExpressFramework();
 			this.Server.use(BodyParser.urlencoded());
-			//this.Server.use(BodyParser.json());
 
-			
 			this.Server.get(`/`, async (req, res) =>{
-				const jsonData: unknown = req.body;
-
 				if (typeof(req.query.code) !== "string"){
 					return;
 				}
 
 				if (typeof(req.query.code) !== "string"){
-					console.log(`[reqHandler] code not found, exit`);
+					//console.log(`[reqHandler] code not found, exit`);
 					return;
 				}
 
-				this.onReceiveToken.emit(req.query.code);
+				const authToken = await this.getAuthToken(req.query.code);
+			
+				if (authToken.is_success){
+					this.authToken = authToken.data;
+					this.onReceiveToken.emit(authToken.data);
+				} else {
+					/**не удалось запросить авторизационный токен */
+					/*console.log(`[onReceiveToken] ошибка запроса авторизационного токена`);
+					console.log(authToken);*/
+				}
 			});
 			
 

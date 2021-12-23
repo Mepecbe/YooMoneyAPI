@@ -19,7 +19,8 @@ let configString = "{}";
 
 try {
 	configString = readFileSync("./config.json", "utf-8");
-} catch (err) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+} catch (err: any) {
 	if (err.code !== "ENOENT") {
 		console.error(err);
 		process.exit(1);
